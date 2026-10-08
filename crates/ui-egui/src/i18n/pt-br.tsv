@@ -102,6 +102,7 @@
 	Fill…	Preencher…
 	Stroke…	Traçado…
 	Content-Aware Fill…	Preenchimento sensível ao conteúdo…
+	Delete and Fill Selection	Excluir e preencher seleção
 	Content-Aware Scale	Escala sensível ao conteúdo
 	Puppet Warp	Distorção de marionete
 	Perspective Warp	Distorção de perspectiva
@@ -2571,3 +2572,4 @@ cameraRaw	Whites	Brancos
 	% of all commits	% de todos os commits
 	Lines +/−	Linhas +/−
 	@{login}: {prs} PRs, {commits} commits, +{added} / −{deleted} lines (Δ {delta}), +{binAdded} / −{binDeleted} binary assets, {first} – {last}	@{login}: {prs} PRs, {commits} commits, +{added} / −{deleted} linhas (Δ {delta}), +{binAdded} / −{binDeleted} arquivos binários, {first} – {last}
+	Apply At Canvas Bounds	Aplicar efeito nos limites da tela
