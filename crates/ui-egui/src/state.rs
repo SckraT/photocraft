@@ -315,6 +315,12 @@ pub struct Panels {
     /// Window › Character / Paragraph: the Character | Paragraph dock group (#150).
     #[serde(default)]
     pub character: bool,
+    /// The right-hand panel dock. ⇧Tab hides and shows it, as in Photoshop (#1313).
+    #[serde(default = "yes")]
+    pub dock: bool,
+    /// What Tab hid (toolbar, options bar, dock), so a second Tab brings back just those.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hidden_by_tab: Option<[bool; 3]>,
 }
 
 impl Default for Panels {
@@ -330,6 +336,8 @@ impl Default for Panels {
             status_bar: true,
             brush_settings: false,
             character: false,
+            dock: true,
+            hidden_by_tab: None,
         }
     }
 }
