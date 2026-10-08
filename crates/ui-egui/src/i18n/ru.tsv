@@ -2407,3 +2407,5 @@ cameraRaw	Roughness	Неровность
 	% of all commits	% от всех коммитов
 	Lines +/−	Строки +/−
 	@{login}: {prs} PRs, {commits} commits, +{added} / −{deleted} lines (Δ {delta}), +{binAdded} / −{binDeleted} binary assets, {first} – {last}	@{login}: PR: {prs}, коммиты: {commits}, строки +{added} / −{deleted} (Δ {delta}), двоичные файлы +{binAdded} / −{binDeleted}, {first} – {last}
+	Could not open	Не удалось открыть
+	{path}: the path is not valid Unicode; rename the file and open it again.	{path}: путь не является допустимым Unicode; переименуйте файл и откройте его снова.

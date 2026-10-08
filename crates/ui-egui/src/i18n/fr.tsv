@@ -2564,3 +2564,5 @@ cameraRaw	Blending	Fusion
 	% of all commits	% de tous les commits
 	Lines +/−	Lignes +/−
 	@{login}: {prs} PRs, {commits} commits, +{added} / −{deleted} lines (Δ {delta}), +{binAdded} / −{binDeleted} binary assets, {first} – {last}	@{login} : {prs} PR, {commits} commits, +{added} / −{deleted} lignes (Δ {delta}), +{binAdded} / −{binDeleted} fichiers binaires, {first} – {last}
+	Could not open	Impossible d’ouvrir
+	{path}: the path is not valid Unicode; rename the file and open it again.	{path} : le chemin n’est pas un Unicode valide ; renommez le fichier puis rouvrez-le.
