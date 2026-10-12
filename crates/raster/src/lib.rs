@@ -83,9 +83,13 @@ impl Tile {
     }
 
     /// Tile-local half-open bounds `(x0, y0, x1, y1)` of the pixels that differ from the encoded
-    /// pixel `dp`, or `None` when every pixel equals it.
+    /// pixel `dp` (one pixel of the tile's format), or `None` when every pixel equals it (or `dp`
+    /// is empty).
     pub fn content_bounds(&self, dp: &[u8]) -> Option<(u16, u16, u16, u16)> {
         let bpp = dp.len();
+        if bpp == 0 {
+            return None;
+        }
         let ts = TILE_SIZE as usize;
         let (mut x0, mut y0, mut x1, mut y1) = (usize::MAX, usize::MAX, 0usize, 0usize);
         for (y, row) in self.data.chunks_exact(ts * bpp).enumerate() {
@@ -763,8 +767,10 @@ impl Surface {
             let dr = dc.rect();
             let sr = dr.translate(dx.saturating_neg(), dy.saturating_neg());
             // Every pixel of the target comes from a source tile (none from the default pixel).
+            // `sr` must be the exact preimage: an offset of `i32::MIN` saturates its negation.
             let covered = sr.width() == TILE_SIZE.unsigned_abs()
                 && sr.height() == TILE_SIZE.unsigned_abs()
+                && sr.translate(dx, dy) == dr
                 && content.contains_rect(&sr)
                 && sr.tiles().all(|sc| self.tiles.contains_key(&sc));
             if covered && let Some(shared) = uniform.window(self, sr) {
@@ -1245,6 +1251,18 @@ mod tests {
     }
 
     #[test]
+    fn tile_content_bounds_scans_against_the_given_pixel() {
+        let mut s = Surface::new(PixelFormat::GRAY8);
+        s.write_pixel(3, 4, &[1.0]);
+        s.write_pixel(200, 9, &[1.0]);
+        let t = s.tile(TileCoord::new(0, 0)).expect("written tile");
+        assert_eq!(t.content_bounds(&[0]), Some((3, 4, 201, 10)));
+        assert_eq!(t.content_bounds(&[255]).map(|b| (b.0, b.1)), Some((0, 0)));
+        // A malformed pixel is no content, not a panic.
+        assert_eq!(t.content_bounds(&[]), None);
+    }
+
+    #[test]
     fn translated_matches_reading_the_moved_pixels() {
         // Any offset (whole tiles, negative, across tile edges), every depth, a non-zero default.
         for fmt in [PixelFormat::RGBA8, PixelFormat::RGBA16, PixelFormat::RGBA32F, PixelFormat::GRAY8] {
@@ -1295,6 +1313,30 @@ mod tests {
             let inner: Vec<_> = t.tiles().filter(|(c, _)| Rect::new(-256, 0, 1024, 768).contains_rect(&c.rect())).map(|(_, a)| a).collect();
             assert!(inner.len() >= 4 && inner.iter().all(|a| Arc::ptr_eq(a, inner[0])), "{fmt:?}: repeated moves copied the inside");
             assert_eq!(t.read_region(r.inflate(3)), s.read_region(r.inflate(3)), "{fmt:?}: back where it started");
+        }
+        // Two solid fills of different values side by side: windows across the seam are
+        // copied (each tile is uniform, but not with the same value), the rest shared.
+        for fmt in [PixelFormat::RGBA8, PixelFormat::RGBA32F] {
+            let mut s = Surface::new(fmt);
+            s.fill_rect(Rect::new(0, 0, 1024, 768), &vec![0.2; fmt.channels()]);
+            s.fill_rect(Rect::new(1024, 0, 2048, 768), &vec![0.9; fmt.channels()]);
+            let t = s.translated(10, 7, s.content_bounds());
+            let all = Rect::new(-20, -20, 2100, 800);
+            assert_eq!(t.read_region(all), s.read_region(all.translate(-10, -7)), "{fmt:?}: two fills");
+            let seam = t.tile(TileCoord::new(4, 1)).expect("seam tile");
+            let (left, right) = (t.tile(TileCoord::new(2, 1)).expect("left"), t.tile(TileCoord::new(6, 1)).expect("right"));
+            assert!(!Arc::ptr_eq(seam, left) && !Arc::ptr_eq(seam, right) && !Arc::ptr_eq(left, right), "{fmt:?}: seam aliased");
+        }
+        // An offset of i32::MIN saturates its negation, so the source window isn't the exact
+        // preimage: no shortcut may apply (a zero pre-fill would leak into the output).
+        let mut s = Surface::with_default(PixelFormat::GRAY8, &[0.5]);
+        s.fill_rect(Rect::new(i32::MAX - 1024, 0, i32::MAX - 512, 512), &[0.25]);
+        let (fill, default) = (s.sample_channel(i32::MAX - 600, 10, 0), s.default_pixel()[0]);
+        for (dx, dy) in [(i32::MIN, 1), (1, i32::MIN), (i32::MIN, 0)] {
+            let t = s.translated(dx, dy, s.content_bounds());
+            for (c, _) in t.tiles() {
+                assert!(t.read_region(c.rect()).iter().all(|v| *v == fill || *v == default), "({dx}, {dy}): tile {c:?} holds a pre-fill");
+            }
         }
         // One tile shared but not uniform: each target is copied, not aliased.
         let mut s = Surface::new(PixelFormat::GRAY8);

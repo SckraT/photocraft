@@ -111,15 +111,21 @@ pub(crate) fn mix_through_selection(
     edited: &[[f32; 4]],
     selection: Option<&Surface>,
 ) -> Vec<f32> {
-    // The coverage of the whole rectangle in one read (channel 0 of each selection pixel).
-    let coverage = selection.map(|sel| (sel.read_region(r), sel.channels()));
+    let w = (r.width() as usize).max(1);
     let mut out = Vec::with_capacity(orig.len() * fmt.channels());
-    for (i, (a, o)) in edited.iter().zip(orig).enumerate() {
-        let k = coverage.as_ref().map_or(1.0, |(c, n)| c.get(i * n).copied().unwrap_or(0.0));
-        let mixed: [f32; 4] = std::array::from_fn(|c| o[c] + (a[c] - o[c]) * k);
-        let mut enc = [0.0f32; 8];
-        let m = photocraft_raster::from_rgba_into(fmt, mixed, &mut enc);
-        out.extend_from_slice(&enc[..m]);
+    // The selection's coverage (channel 0) one row at a time, each of its tiles looked up once
+    // per row rather than once per pixel.
+    let mut coverage = vec![1.0f32; w];
+    for (j, (edited_row, orig_row)) in edited.chunks(w).zip(orig.chunks(w)).enumerate() {
+        if let Some(sel) = selection {
+            sel.sample_row_strided(r.y0.saturating_add(j as i32), r.x0, 1, 0, &mut coverage);
+        }
+        for ((a, o), k) in edited_row.iter().zip(orig_row).zip(&coverage) {
+            let mixed: [f32; 4] = std::array::from_fn(|c| o[c] + (a[c] - o[c]) * k);
+            let mut enc = [0.0f32; 8];
+            let m = photocraft_raster::from_rgba_into(fmt, mixed, &mut enc);
+            out.extend_from_slice(&enc[..m]);
+        }
     }
     out
 }
