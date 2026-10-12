@@ -2136,53 +2136,15 @@ fn words(v: &[W]) -> Vec<u8> {
         .collect()
 }
 
-/// IEEE half from f32 (round to nearest even; overflow → inf).
+/// IEEE half from f32 (round to nearest even; overflow → inf), with the CPU's conversion
+/// instruction where it has one (a 32-bit page converts every sample it uploads).
 pub fn f32_to_f16(x: f32) -> u16 {
-    let b = x.to_bits();
-    let sign = ((b >> 16) & 0x8000) as u16;
-    let exp = ((b >> 23) & 0xff) as i32;
-    let man = b & 0x7f_ffff;
-    if exp == 0xff {
-        return sign | 0x7c00 | if man != 0 { 0x200 } else { 0 };
-    }
-    let e = exp - 127 + 15;
-    if e >= 0x1f {
-        return sign | 0x7c00;
-    }
-    if e <= 0 {
-        if e < -10 {
-            return sign;
-        }
-        let m = man | 0x80_0000;
-        let shift = (14 - e) as u32;
-        let half = 1u32 << (shift - 1);
-        let rounded = (m + half - 1 + ((m >> shift) & 1)) >> shift;
-        return sign | rounded as u16;
-    }
-    let mut h = ((e as u32) << 10) | (man >> 13);
-    let rest = man & 0x1fff;
-    if rest > 0x1000 || (rest == 0x1000 && (h & 1) == 1) {
-        h += 1;
-    }
-    sign | h as u16
+    half::f16::from_f32(x).to_bits()
 }
 
 /// f32 from IEEE half.
 pub fn f16_to_f32(h: u16) -> f32 {
-    let sign = if h & 0x8000 != 0 { -1.0 } else { 1.0 };
-    let exp = ((h >> 10) & 0x1f) as i32;
-    let man = (h & 0x3ff) as f32;
-    match exp {
-        0 => sign * man * 2f32.powi(-24),
-        0x1f => {
-            if man == 0.0 {
-                sign * f32::INFINITY
-            } else {
-                f32::NAN
-            }
-        }
-        e => sign * (1.0 + man / 1024.0) * 2f32.powi(e - 15),
-    }
+    half::f16::from_bits(h).to_f32()
 }
 
 /// Blocking readback of a composite (native tests and tools).
@@ -2256,6 +2218,70 @@ pub fn render_to_vec_stats(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The bit-twiddling conversion `f32_to_f16` used before it called `half`: the oracle.
+    fn reference_f32_to_f16(x: f32) -> u16 {
+        let b = x.to_bits();
+        let sign = ((b >> 16) & 0x8000) as u16;
+        let exp = ((b >> 23) & 0xff) as i32;
+        let man = b & 0x7f_ffff;
+        if exp == 0xff {
+            return sign | 0x7c00 | if man != 0 { 0x200 } else { 0 };
+        }
+        let e = exp - 127 + 15;
+        if e >= 0x1f {
+            return sign | 0x7c00;
+        }
+        if e <= 0 {
+            if e < -10 {
+                return sign;
+            }
+            let m = man | 0x80_0000;
+            let shift = (14 - e) as u32;
+            let half = 1u32 << (shift - 1);
+            let rounded = (m + half - 1 + ((m >> shift) & 1)) >> shift;
+            return sign | rounded as u16;
+        }
+        let mut h = ((e as u32) << 10) | (man >> 13);
+        let rest = man & 0x1fff;
+        if rest > 0x1000 || (rest == 0x1000 && (h & 1) == 1) {
+            h += 1;
+        }
+        sign | h as u16
+    }
+
+    #[test]
+    fn half_conversion_matches_the_reference_bit_for_bit() {
+        // Every f32 exponent and sign with a spread of mantissas, plus every value whose f16
+        // rounding is decided by its low bits (ties included); NaN only needs to stay NaN.
+        let mut bits: Vec<u32> = (0..=u32::MAX).step_by(65_521).collect();
+        for e in 0u32..=255 {
+            for m in [0u32, 1, 0xfff, 0x1000, 0x1001, 0x2000, 0x3000, 0x7f_e000, 0x7f_f000, 0x7f_ffff] {
+                bits.extend([(e << 23) | m, 0x8000_0000 | (e << 23) | m]);
+            }
+        }
+        bits.extend((0x3300_0000u32..0x3900_0000).step_by(97));
+        for b in bits {
+            let x = f32::from_bits(b);
+            if x.is_nan() {
+                assert!(f16_to_f32(f32_to_f16(x)).is_nan(), "{b:#010x}");
+            } else {
+                assert_eq!(f32_to_f16(x), reference_f32_to_f16(x), "{x:e} ({b:#010x})");
+            }
+        }
+        for h in 0..=u16::MAX {
+            let v = f16_to_f32(h);
+            let exp = (h >> 10) & 0x1f;
+            let man = f32::from(h & 0x3ff);
+            let sign = if h & 0x8000 != 0 { -1.0 } else { 1.0 };
+            match exp {
+                0x1f if h & 0x3ff != 0 => assert!(v.is_nan()),
+                0x1f => assert_eq!(v, sign * f32::INFINITY),
+                0 => assert_eq!(v, sign * man * 2f32.powi(-24), "{h:#06x}"),
+                e => assert_eq!(v, sign * (1.0 + man / 1024.0) * 2f32.powi(i32::from(e) - 15), "{h:#06x}"),
+            }
+        }
+    }
 
     #[test]
     fn half_roundtrip() {
