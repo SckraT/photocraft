@@ -11,7 +11,7 @@
 //! Patterns are referenced by `"pattern": id | name` (document first, then library).
 
 use photocraft_color::{ColorMode, PixelFormat, SampleType};
-use photocraft_doc::{Color, Document, Fill, Layer, LayerContent, Pattern, Rect};
+use photocraft_doc::{Document, Fill, Layer, LayerContent, Pattern, Rect};
 use photocraft_raster::Surface;
 use serde_json::{Value, json};
 
@@ -348,18 +348,6 @@ fn brush_texture(s: &mut Session, p: &Value) -> Result<Value> {
         t.scale = (sc as f32 / 100.0).clamp(0.01, 10.0);
     }
     Ok(json!({"pattern": pat.id}))
-}
-
-/// A swatch colour for UIs (average of the tile), straight RGB.
-pub fn average_color(p: &Pattern) -> Color {
-    // A pattern too large to paint is averaged over its paintable top-left corner.
-    let side = photocraft_doc::pattern::MAX_PAINT_PIXELS.isqrt() as u32;
-    let (w, h) = (p.width.min(side), p.height.min(side));
-    let mut px = vec![[0.0f32; 4]; w as usize * h as usize];
-    p.surface.read_rgba_into(Rect::new(0, 0, w as i32, h as i32), &mut px);
-    let n = px.len().max(1) as f32;
-    let s = px.iter().fold([0.0f32; 3], |a, q| [a[0] + q[0], a[1] + q[1], a[2] + q[2]]);
-    Color::rgb(s[0] / n, s[1] / n, s[2] / n)
 }
 
 pub fn specs() -> Vec<CommandSpec> {

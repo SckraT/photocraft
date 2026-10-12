@@ -311,17 +311,9 @@ impl Adjustment {
         }
     }
 
-    pub fn default_hue_saturation() -> Self {
-        Adjustment::HueSaturation { hue: 0.0, saturation: 0.0, lightness: 0.0, colorize: false, ranges: HueRange::defaults() }
-    }
-
     pub fn identity_curves() -> Self {
         let line = || vec![CurvePoint { input: 0.0, output: 0.0 }, CurvePoint { input: 1.0, output: 1.0 }];
         Adjustment::Curves { master: line(), per_channel: [line(), line(), line()], space: ToneSpace::Rgb, black: Vec::new(), pencil: false }
-    }
-
-    pub fn identity_levels() -> Self {
-        Adjustment::Levels { master: LevelsChannel::default(), per_channel: Default::default(), space: ToneSpace::Rgb, black: LevelsChannel::default() }
     }
 }
 

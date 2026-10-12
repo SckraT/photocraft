@@ -17,10 +17,7 @@ workspace = true
 
 [dependencies]
 photocraft-doc = { workspace = true }
-photocraft-color = { workspace = true }
 photocraft-raster = { workspace = true }
-photocraft-geom = { workspace = true }
-photocraft-compose = { workspace = true }
 photocraft-engine = { workspace = true }
 photocraft-codecs = { workspace = true }
 photocraft-io = { workspace = true }
@@ -82,6 +79,10 @@ winit = { version = "=0.30.13", default-features = false, features = ["x11"] }
 # Safe Windows screen-capture bindings; Linux uses the pure-Rust X11 client/portal.
 xcap = "=0.9.8"
 winsafe = { version = "=0.0.29", default-features = false, features = ["user"] }
+
+[dev-dependencies]
+photocraft-color = { workspace = true }
+photocraft-compose = { workspace = true }
 
 # tests/mac_menu_appkit.rs: reads AppKit's menu bar back and sends it real key events.
 [target.'cfg(target_os = "macos")'.dev-dependencies]

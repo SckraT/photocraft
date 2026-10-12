@@ -1247,12 +1247,6 @@ fn bake_cube_layers(size: usize, title: &str, layers: &[&Layer]) -> String {
     s
 }
 
-/// Backwards-compatible helper for exporting all visible top-level adjustments.
-pub fn bake_cube(doc: &Document, size: usize, title: &str) -> String {
-    let layers: Vec<&Layer> = doc.layers.iter().filter(|l| l.visible && matches!(l.content, LayerContent::Adjustment(_))).collect();
-    bake_cube_layers(size.clamp(2, photocraft_cms::lutfile::MAX_SIZE), title, &layers)
-}
-
 /// Export either the whole visible stack (backward-compatible default), the Layers panel's
 /// current selection, or an explicit list supplied by scripts/CLI/automation.
 fn color_lookup_tables(s: &mut Session, p: &Value) -> Result<Value> {

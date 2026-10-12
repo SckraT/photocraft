@@ -200,11 +200,6 @@ fn canvas(tree: &usvg::Tree, warnings: &mut Vec<String>) -> Canvas {
     Canvas { size: Size::new(side(w), side(h)), scale }
 }
 
-/// Opens an SVG as a document of shape layers (see the module docs for what is rasterised).
-pub fn import_svg(name: &str, bytes: &[u8]) -> Result<ImportResult, IoError> {
-    import_svg_with_group_depth(name, bytes, MAX_GROUP_DEPTH)
-}
-
 /// Opens an SVG while rasterising any subtrees deeper than `max_group_depth` into single pixel
 /// layers. The document's hard nesting limit remains [`MAX_GROUP_DEPTH`].
 pub fn import_svg_with_group_depth(name: &str, bytes: &[u8], max_group_depth: usize) -> Result<ImportResult, IoError> {

@@ -599,12 +599,6 @@ pub struct StrokeRenderer {
 }
 
 impl StrokeRenderer {
-    /// Composite the union of this stroke and a mirrored pass as one stroke. This keeps
-    /// overlapping dabs on a symmetry axis under one opacity ceiling at every bit depth.
-    pub fn composite_union(&self, other: &Self, pre: &Surface, target: &mut Surface, selection: Option<&Surface>, lock_transparency: bool) -> Rect {
-        self.composite_union_many(std::iter::once(other), pre, target, selection, lock_transparency)
-    }
-
     /// Combine all symmetry passes before applying brush opacity and selection once.
     pub fn composite_union_many<'a>(
         &self,

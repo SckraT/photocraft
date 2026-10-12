@@ -113,11 +113,6 @@ impl BlackLevels {
         let base = self.values.get((r * self.cols.max(1) + c) * spp + s).or_else(|| self.values.first()).copied().unwrap_or(0.0);
         base + self.delta_h.get(ax).copied().unwrap_or(0.0) + self.delta_v.get(ay).copied().unwrap_or(0.0)
     }
-
-    /// `true` when there is a single black value for everything.
-    pub fn is_uniform(&self) -> bool {
-        self.delta_h.iter().all(|v| *v == 0.0) && self.delta_v.iter().all(|v| *v == 0.0) && self.values.windows(2).all(|w| w[0] == w[1])
-    }
 }
 
 /// Undeveloped sensor data with everything needed to develop it.

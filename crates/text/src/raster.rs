@@ -17,11 +17,6 @@ impl Xform {
         let [oa, ob, oc, od, oe, of] = o.0;
         Xform([a * oa + c * ob, b * oa + d * ob, a * oc + c * od, b * oc + d * od, a * oe + c * of + e, b * oe + d * of + f])
     }
-    /// Largest scale factor (for flattening tolerance).
-    pub fn max_scale(&self) -> f64 {
-        let [a, b, c, d, ..] = self.0;
-        (a * a + b * b).sqrt().max((c * c + d * d).sqrt())
-    }
 }
 
 /// Receives flattened line segments.

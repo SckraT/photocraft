@@ -399,18 +399,6 @@ pub fn components(mask: &[bool], w: usize, h: usize) -> (Vec<u32>, Vec<usize>) {
     (lab, sizes)
 }
 
-/// Keeps the connected components of `mask` that contain a `seed` pixel.
-pub fn keep_seeded(mask: &[bool], seeds: &[bool], w: usize, h: usize) -> Vec<bool> {
-    let (lab, sizes) = components(mask, w, h);
-    let mut keep = vec![false; sizes.len()];
-    for (l, s) in lab.iter().zip(seeds) {
-        if *s && *l != 0 {
-            keep[*l as usize] = true;
-        }
-    }
-    lab.iter().map(|l| keep[*l as usize] && *l != 0).collect()
-}
-
 /// Keeps components at least `frac` of the largest one and fills holes (4-connected background
 /// areas not touching the border) smaller than `hole_frac` of the kept area.
 pub fn clean_mask(mask: &[bool], w: usize, h: usize, frac: f32, hole_frac: f32) -> Vec<bool> {

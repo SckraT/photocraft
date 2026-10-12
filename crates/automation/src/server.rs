@@ -1036,11 +1036,6 @@ mod conventions;
 mod progress;
 mod transport;
 
-/// Used by the render helper in tests and the CLI.
-pub fn render_document_png(doc: &photocraft_doc::Document, max_side: u32) -> Result<Vec<u8>, AutomationError> {
-    files::render_png(doc, max_side)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

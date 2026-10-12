@@ -4207,7 +4207,6 @@ dependencies = [
  "photocraft-doc",
  "photocraft-engine",
  "photocraft-format",
- "photocraft-geom",
  "photocraft-io",
  "photocraft-raster",
  "photocraft-tablet",
@@ -4258,7 +4257,6 @@ dependencies = [
  "photocraft-doc",
  "photocraft-engine",
  "photocraft-format",
- "photocraft-geom",
  "photocraft-io",
  "rmcp",
  "schemars",
@@ -4330,7 +4328,6 @@ dependencies = [
  "photocraft-paint",
  "photocraft-raster",
  "photocraft-vector",
- "proptest",
  "rayon",
 ]
 
@@ -4510,7 +4507,6 @@ dependencies = [
  "photocraft-color",
  "photocraft-geom",
  "proptest",
- "serde",
 ]
 
 [[package]]
@@ -4545,9 +4541,6 @@ name = "photocraft-testkit"
 version = "0.8.0"
 dependencies = [
  "memory-stats",
- "photocraft-color",
- "photocraft-geom",
- "photocraft-raster",
  "serde_json",
 ]
 

@@ -150,12 +150,6 @@ pub enum TextAlign {
     JustifyAll,
 }
 
-impl TextAlign {
-    pub fn is_justified(self) -> bool {
-        matches!(self, Self::JustifyLeft | Self::JustifyCenter | Self::JustifyRight | Self::JustifyAll)
-    }
-}
-
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TextDirection {
     /// From the first strong character (Unicode bidi rules).

@@ -971,11 +971,6 @@ impl Rgba8Image {
     }
 }
 
-/// Is this sample type able to hold values above 1.0 (HDR)?
-pub fn is_hdr(sample: SampleType) -> bool {
-    matches!(sample, SampleType::F32)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

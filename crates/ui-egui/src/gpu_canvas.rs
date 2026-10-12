@@ -171,11 +171,6 @@ impl GpuCanvas {
         }
     }
 
-    /// The adapter this canvas renders with.
-    pub fn adapter_info(&self) -> wgpu::AdapterInfo {
-        self.rs.adapter.get_info()
-    }
-
     /// The canvas texture format for a document of `depth` and `size`: `Rgba16Float` for 16/32-bit
     /// documents when the adapter supports it and the document fits [`F16_BUDGET_PX`], else
     /// `Rgba8Unorm`.

@@ -140,12 +140,6 @@ pub(super) fn quick_select_using<const OPTIMIZED: bool>(sampler: &dyn Sampler, c
     }
 }
 
-/// The model at working resolution: `seeds` (the brush footprint, `radius` working pixels) are
-/// selected; returns the selection.
-pub fn select_working(img: &RgbImage, seeds: &[bool], radius: f32, t: &Tuning) -> Vec<bool> {
-    select_working_using::<true>(img, seeds, radius, t)
-}
-
 fn select_working_using<const OPTIMIZED: bool>(img: &RgbImage, seeds: &[bool], radius: f32, t: &Tuning) -> Vec<bool> {
     let (w, h) = (img.w, img.h);
     let d = crate::selection::edt(seeds, w, h);

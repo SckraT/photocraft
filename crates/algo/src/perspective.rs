@@ -36,9 +36,6 @@ impl Plane {
 
 const LINK_EPS: f64 = 0.5;
 
-/// Unit square corners in plane order.
-const UNIT: [[f64; 2]; 4] = [[0.0, 0.0], [1.0, 0.0], [1.0, 1.0], [0.0, 1.0]];
-
 fn unit_to_quad(q: &[[f64; 2]; 4]) -> Option<Homography> {
     Homography::rect_to_quad([0.0, 0.0, 1.0, 1.0], *q)
 }
@@ -244,11 +241,6 @@ fn dist_to_quad(q: &[[f64; 2]; 4], p: [f64; 2]) -> f64 {
             ((a[0] + t * dx - p[0]).powi(2) + (a[1] + t * dy - p[1]).powi(2)).sqrt()
         })
         .fold(f64::MAX, f64::min)
-}
-
-/// Corners of the unit square in plane order (for callers drawing plane grids).
-pub fn unit_corners() -> [[f64; 2]; 4] {
-    UNIT
 }
 
 /// A point of plane `p` at plane coordinates `(u, v)`, in source space.

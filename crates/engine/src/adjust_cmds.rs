@@ -177,17 +177,6 @@ fn read_file(_: &str) -> Option<Vec<u8>> {
     None
 }
 
-/// `layer.setAdjustment` for the kinds edited one range / option at a time: params merge into the
-/// current values; a call with no parameters resets to defaults.
-pub fn update_adjustment(existing: &Adjustment, p: &Value) -> Option<Result<Adjustment>> {
-    let empty = p.as_object().is_none_or(|o| o.keys().all(|k| matches!(k.as_str(), "layer" | "coalesce" | "__kind")));
-    match existing {
-        Adjustment::SelectiveColor { .. } => Some(selective_from_params(p, (!empty).then_some(existing))),
-        Adjustment::ColorLookup { .. } => Some(lookup_from_params(p, (!empty).then_some(existing))),
-        _ => None,
-    }
-}
-
 // ---------- destructive helpers ----------
 
 /// Runs `f` on the target surface's content as straight RGBA (`w × h` = content bounds), blending
