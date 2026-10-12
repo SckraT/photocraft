@@ -1469,26 +1469,6 @@ fn style_index(s: photocraft_doc::GradientStyle) -> f32 {
     }
 }
 
-fn sample_stops4(stops: &[(f32, [f32; 4])], t: f32) -> [f32; 4] {
-    match stops {
-        [] => [0.0; 4],
-        [only] => only.1,
-        _ => {
-            if t <= stops[0].0 {
-                return stops[0].1;
-            }
-            for w in stops.windows(2) {
-                let (a, b) = (&w[0], &w[1]);
-                if t <= b.0 {
-                    let k = if b.0 > a.0 { (t - a.0) / (b.0 - a.0) } else { 0.0 };
-                    return std::array::from_fn(|i| a.1[i] + (b.1[i] - a.1[i]) * k);
-                }
-            }
-            stops[stops.len() - 1].1
-        }
-    }
-}
-
 fn lut_rows(f: impl Fn(usize, f32) -> f32, rows: usize) -> Vec<[f32; 4096]> {
     (0..rows)
         .map(|r| {
@@ -1627,7 +1607,7 @@ pub fn adjustment_program(adj: &Adjustment, transfer: Transfer, depth: photocraf
             p[0][0] = if *reverse { 1.0 } else { 0.0 };
             p[0][1] = if *dither { 1.0 } else { 0.0 };
             let s4: Vec<(f32, [f32; 4])> = stops.iter().map(|(t, c)| (*t, [c[0], c[1], c[2], 1.0])).collect();
-            let rows = lut_rows(|r, t| if s4.is_empty() { t } else { sample_stops4(&s4, t)[r] }, 3);
+            let rows = lut_rows(|r, t| if s4.is_empty() { t } else { photocraft_color::lerp_stops(&s4, t, [0.0; 4])[r] }, 3);
             (13, p, Some(rows))
         }
         Adjustment::ColorBalance { shadows, midtones, highlights, preserve_luminosity } => {

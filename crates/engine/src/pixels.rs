@@ -99,13 +99,26 @@ fn adjusted(s: &Surface, r: Rect, adj: &Adjustment, selection: Option<&Surface>,
     // integer depths keep the unrounded, clipped curves.
     let depth = (fmt.sample == photocraft_color::SampleType::F32).then_some(fmt.sample);
     adjust::apply_in(adj, &mut buf, adjust::Transfer::for_document(mode, fmt.sample), depth, mode);
-    let w = r.width() as usize;
-    let mut out = Vec::with_capacity(raw.len());
-    for (i, (a, o)) in buf.px.iter().zip(&orig.px).enumerate() {
-        let k = selection.map_or(1.0, |sel| sel.sample_channel(r.x0 + (i % w) as i32, r.y0 + (i / w) as i32, 0));
+    mix_through_selection(&fmt, r, &orig.px, &buf.px, selection)
+}
+
+/// `edited` mixed back over `orig` (straight RGBA over `r`, row-major) by the selection's
+/// coverage, encoded in `fmt`: what a destructive edit writes back through a selection.
+pub(crate) fn mix_through_selection(
+    fmt: &photocraft_color::PixelFormat,
+    r: Rect,
+    orig: &[[f32; 4]],
+    edited: &[[f32; 4]],
+    selection: Option<&Surface>,
+) -> Vec<f32> {
+    // The coverage of the whole rectangle in one read (channel 0 of each selection pixel).
+    let coverage = selection.map(|sel| (sel.read_region(r), sel.channels()));
+    let mut out = Vec::with_capacity(orig.len() * fmt.channels());
+    for (i, (a, o)) in edited.iter().zip(orig).enumerate() {
+        let k = coverage.as_ref().map_or(1.0, |(c, n)| c.get(i * n).copied().unwrap_or(0.0));
         let mixed: [f32; 4] = std::array::from_fn(|c| o[c] + (a[c] - o[c]) * k);
         let mut enc = [0.0f32; 8];
-        let m = photocraft_raster::from_rgba_into(&fmt, mixed, &mut enc);
+        let m = photocraft_raster::from_rgba_into(fmt, mixed, &mut enc);
         out.extend_from_slice(&enc[..m]);
     }
     out

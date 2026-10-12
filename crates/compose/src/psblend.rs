@@ -49,26 +49,9 @@ fn color_dodge(cb: f32, cs: f32) -> f32 {
     }
 }
 
-fn vivid_light_generic(cb: f32, cs: f32) -> f32 {
-    if cs <= 0.5 {
-        if cb >= 1.0 - EDGE {
-            1.0
-        } else if cs <= 0.0 {
-            0.0
-        } else {
-            1.0 - ((1.0 - cb) / (2.0 * cs)).min(1.0)
-        }
-    } else if cb <= EDGE {
-        0.0
-    } else if cs >= 1.0 {
-        1.0
-    } else {
-        (cb / (2.0 * (1.0 - cs))).min(1.0)
-    }
-}
-
+/// Hard Mix: the generic one, also in 32-bit documents (it posterises to 0 or 1 either way).
 fn hard_mix_ps(cb: f32, cs: f32) -> f32 {
-    if vivid_light_generic(cb, cs) >= 0.5 - 1e-6 { 1.0 } else { 0.0 }
+    generic::blend_channel(BlendMode::HardMix, cb, cs)
 }
 
 thread_local! {

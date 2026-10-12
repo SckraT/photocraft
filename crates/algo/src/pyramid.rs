@@ -521,7 +521,8 @@ pub fn fuse_stack(w: usize, h: usize, ch: usize, images: &[&[f32]], luma: &[Vec<
     collapse(&acc, ch).into_iter().map(|v| v.clamp(0.0, 1.0)).collect()
 }
 
-fn box_blur1(w: usize, h: usize, v: &[f32], r: usize) -> Vec<f32> {
+/// Box blur of radius `r` over a `w × h` plane, rows then columns, edges clamped.
+pub(crate) fn box_blur1(w: usize, h: usize, v: &[f32], r: usize) -> Vec<f32> {
     let pass = |src: &[f32], horizontal: bool| -> Vec<f32> {
         let mut dst = vec![0.0f32; src.len()];
         let (n, m) = if horizontal { (h, w) } else { (w, h) };

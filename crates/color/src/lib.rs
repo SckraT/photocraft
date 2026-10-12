@@ -198,6 +198,24 @@ impl Color {
     }
 }
 
+/// Linear interpolation between stops sorted by position: the first stop's value up to it, the
+/// last one's past it, the left stop of coincident ones, and `empty` when there are no stops.
+pub fn lerp_stops<const N: usize>(stops: &[(f32, [f32; N])], t: f32, empty: [f32; N]) -> [f32; N] {
+    let (Some(first), Some(last)) = (stops.first(), stops.last()) else { return empty };
+    if t <= first.0 {
+        return first.1;
+    }
+    for w in stops.windows(2) {
+        if let [a, b] = w
+            && t <= b.0
+        {
+            let k = if b.0 > a.0 { (t - a.0) / (b.0 - a.0) } else { 0.0 };
+            return std::array::from_fn(|i| a.1[i] + (b.1[i] - a.1[i]) * k);
+        }
+    }
+    last.1
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -621,16 +621,6 @@ fn quantize(b: &mut Buffer, q: f32) {
     }
 }
 
-/// Deterministic hash for Dissolve (document-coordinate based, so it is stable under tiling).
-#[inline]
-fn dissolve_noise(x: i32, y: i32) -> f32 {
-    let mut h = (x as u32).wrapping_mul(0x8da6_b343) ^ (y as u32).wrapping_mul(0xd816_3841) ^ 0x9e37_79b9;
-    h ^= h >> 15;
-    h = h.wrapping_mul(0x2c1b_3c6d);
-    h ^= h >> 12;
-    (h & 0xffff) as f32 / 65536.0
-}
-
 /// Bounds of a layer's own pixels (union over group children; the canvas
 /// for fill layers; an artboard's board).
 pub fn layer_bounds(layer: &Layer, canvas: Rect) -> Rect {
@@ -1733,7 +1723,8 @@ fn blend_into_g(backdrop: &mut Buffer, src: &Buffer, mode: BlendMode, opacity: f
         if mode == BlendMode::Dissolve {
             let x = rect.x0 + (i as i32 % w);
             let y = rect.y0 + (i as i32 / w);
-            s[3] = if dissolve_noise(x, y) < s[3] * opacity { 1.0 } else { 0.0 };
+            // Document-coordinate hash: the speckle is stable under tiling.
+            s[3] = if effects::hash_noise(x.into(), y.into()) < s[3] * opacity { 1.0 } else { 0.0 };
             mode = BlendMode::Normal;
             *b = blend::composite(mode, *b, s, 1.0);
             continue;

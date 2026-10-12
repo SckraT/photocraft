@@ -207,7 +207,7 @@ pub fn apply_depth(adj: &Adjustment, buf: &mut Buffer, transfer: Transfer, depth
                 if *reverse {
                     t = 1.0 - t;
                 }
-                let mut o = gradient(stops, t);
+                let mut o = photocraft_color::lerp_stops(stops, t, [t; 3]);
                 if *dither {
                     let d = bayer4(x0 + (i % w) as i32, y0 + (i / w) as i32) / 255.0;
                     o = o.map(|v| (v + d).clamp(0.0, 1.0));
@@ -319,7 +319,8 @@ fn apply_lab(adj: &Adjustment, buf: &mut Buffer) {
                 }
                 // Driven by L: equal lightness maps to the same stop colour whatever the chroma.
                 let l = lab_norm([p[0], p[1], p[2]])[0].clamp(0.0, 1.0);
-                let mut o = gradient(stops, if *reverse { 1.0 - l } else { l });
+                let at = if *reverse { 1.0 - l } else { l };
+                let mut o = photocraft_color::lerp_stops(stops, at, [at; 3]);
                 if *dither {
                     let d = bayer4(x0 + (i % w) as i32, y0 + (i / w) as i32) / 255.0;
                     o = o.map(|v| (v + d).clamp(0.0, 1.0));
@@ -970,25 +971,6 @@ pub fn contour_curve_lut(points: &[CurvePoint], corners: &[bool]) -> Vec<f32> {
         start = i;
     }
     if out.is_empty() { curve_lut(points) } else { out }
-}
-
-fn gradient(stops: &[(f32, [f32; 3])], t: f32) -> [f32; 3] {
-    match stops {
-        [] => [t; 3],
-        [s] => s.1,
-        _ => {
-            if t <= stops[0].0 {
-                return stops[0].1;
-            }
-            for w in stops.windows(2) {
-                if t <= w[1].0 {
-                    let k = if w[1].0 > w[0].0 { (t - w[0].0) / (w[1].0 - w[0].0) } else { 0.0 };
-                    return std::array::from_fn(|i| w[0].1[i] + (w[1].1[i] - w[0].1[i]) * k);
-                }
-            }
-            stops[stops.len() - 1].1
-        }
-    }
 }
 
 pub fn rgb_to_hsl(c: [f32; 3]) -> (f32, f32, f32) {

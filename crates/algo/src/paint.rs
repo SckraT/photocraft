@@ -35,26 +35,6 @@ pub fn tool_gradient_t(shape: GradientShape, from: (f32, f32), to: (f32, f32), x
     t.clamp(0.0, 1.0)
 }
 
-/// Samples RGBA stops (sorted by position) at `t`.
-pub fn sample_stops(stops: &[(f32, [f32; 4])], t: f32) -> [f32; 4] {
-    match stops {
-        [] => [0.0; 4],
-        [s] => s.1,
-        _ => {
-            if t <= stops[0].0 {
-                return stops[0].1;
-            }
-            for w in stops.windows(2) {
-                if t <= w[1].0 {
-                    let k = if w[1].0 > w[0].0 { (t - w[0].0) / (w[1].0 - w[0].0) } else { 0.0 };
-                    return std::array::from_fn(|i| w[0].1[i] + (w[1].1[i] - w[0].1[i]) * k);
-                }
-            }
-            stops[stops.len() - 1].1
-        }
-    }
-}
-
 /// Composites `color(i)` over `area` of the surface with per-pixel coverage.
 fn composite_area(
     s: &mut Surface,
@@ -133,7 +113,7 @@ pub fn paint_gradient(
         |x, y| opacity * selection.map_or(1.0, |m| m.sample_channel(x, y, 0)),
         |x, y| {
             let t = tool_gradient_t(shape, from, to, x as f32 + 0.5, y as f32 + 0.5);
-            let mut c = sample_stops(stops, if reverse { 1.0 - t } else { t });
+            let mut c = photocraft_color::lerp_stops(stops, if reverse { 1.0 - t } else { t }, [0.0; 4]);
             if dither {
                 // One quantisation step of monochromatic noise breaks 8-bit banding without speckle.
                 let n = (photocraft_color::dither_noise(x, y) - 0.5) / 255.0;

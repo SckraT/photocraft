@@ -110,7 +110,7 @@ fn original_blend_into_g(backdrop: &mut Buffer, src: &Buffer, mode: BlendMode, o
         if mode == BlendMode::Dissolve {
             let x = rect.x0 + (i as i32 % w);
             let y = rect.y0 + (i as i32 / w);
-            s[3] = if dissolve_noise(x, y) < s[3] * opacity { 1.0 } else { 0.0 };
+            s[3] = if effects::hash_noise(x.into(), y.into()) < s[3] * opacity { 1.0 } else { 0.0 };
             mode = BlendMode::Normal;
             *b = blend::composite(mode, *b, s, 1.0);
             continue;

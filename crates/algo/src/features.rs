@@ -18,6 +18,7 @@
 //! Everything is deterministic (fixed-seed RNG). Images are `w × h` luminance in `0..=1`.
 
 use crate::photo_util::par_map;
+use crate::pyramid::box_blur1 as blur;
 use crate::transform::Homography;
 
 /// A detected corner.
@@ -58,27 +59,6 @@ impl Rng {
     fn below(&mut self, n: usize) -> usize {
         (self.next() % n.max(1) as u64) as usize
     }
-}
-
-fn blur(w: usize, h: usize, v: &[f32], r: usize) -> Vec<f32> {
-    let pass = |src: &[f32], horizontal: bool| -> Vec<f32> {
-        let mut dst = vec![0.0f32; src.len()];
-        let (n, m) = if horizontal { (h, w) } else { (w, h) };
-        for line in 0..n {
-            let at = |k: i64| {
-                let k = k.clamp(0, m as i64 - 1) as usize;
-                if horizontal { src[line * w + k] } else { src[k * w + line] }
-            };
-            let mut acc: f32 = (-(r as i64)..=r as i64).map(at).sum();
-            for k in 0..m {
-                let i = if horizontal { line * w + k } else { k * w + line };
-                dst[i] = acc / (2 * r + 1) as f32;
-                acc += at(k as i64 + r as i64 + 1) - at(k as i64 - r as i64);
-            }
-        }
-        dst
-    };
-    pass(&pass(v, true), false)
 }
 
 /// Harris corners: at most `max` corners at least `min_dist` pixels apart, strongest first,

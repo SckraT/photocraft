@@ -584,7 +584,7 @@ pub fn preset_swatch(app: &mut PhotocraftApp, ui: &mut egui::Ui) -> bool {
     let t = Tokens::get(ui.ctx());
     let stops = app.session.presets.gradient.resolve(app.session.tools.foreground, app.session.tools.background);
     let (r, resp) = ui.allocate_exact_size(vec2(96.0, 20.0), Sense::click());
-    paint_ramp(ui.painter(), r, |u| photocraft_algo::paint::sample_stops(&stops, u));
+    paint_ramp(ui.painter(), r, |u| photocraft_color::lerp_stops(&stops, u, [0.0; 4]));
     ui.painter().rect_stroke(r, 0.0, Stroke::new(1.0, t.field_border), StrokeKind::Outside);
     // Name the control for accessibility (and so tests and agents can find it).
     resp.widget_info(|| egui::WidgetInfo::labeled(egui::WidgetType::Button, true, tl!("Gradient picker")));
