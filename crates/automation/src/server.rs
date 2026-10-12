@@ -17,7 +17,7 @@ use crate::bridge::BridgeClient;
 use crate::budgets::{BatchReplyBudget, MAX_PREVIEW_SIDE, check_png, json_bytes};
 use crate::headless::Headless;
 use crate::security::MAX_BATCH_STEPS;
-use crate::{AuthorizedWorkspace, AutomationError, files};
+use crate::{AuthorizedWorkspace, AutomationError};
 
 /// Where tools are executed.
 pub enum Backend {
